@@ -14,7 +14,7 @@ require DynaLoader;
 @EXPORT_OK = qw(&sys_info_names        &get_all_sys_info_items
                 &get_one_sys_info_item &decode_sys_info_bitmap
                 &node_list);
-$VERSION = '1.03';
+$VERSION = '1.04';
 
 bootstrap VMS::System $VERSION;
 
@@ -108,6 +108,16 @@ Object access:
 
 Retrieve info for a node. Access is via function call, object and method,
 or tied hash. Choose your favorite.
+
+=head1 Special Stuff
+
+While Most items are scalars, there are a few exceptions. THERMAL_VECTOR,
+TEMERATURE_VECTOR, FAN_VECTOR, and POWER_VECTOR are arrays, with each array
+element corresponding to a particular CPU (for THERMAL_VECTOR and
+TEMPERATURE_VECTOR), fan, or power supply. TEMPERATURE_VECTOR is an array
+of CPU temperatures, while the other three are arrays that will contain
+Good, Bad, Not Present, or Dunno, depending on the status of the fan, power
+supply, or CPU temperature.
 
 =head1 BUGS
 

@@ -43,3 +43,7 @@ Revision history for Perl extension VMS::System (ex VMS::SysInfo)
 1.03  Fri Nov 21 16:55:02 1997
     - Merged the _parm_ and _info_ routines into just _info_ routines.
     - Added the node_list function
+
+1.04  Tue Jan 20 16:20:05 1998
+    - Added the (undocumented) POWER_VECTOR, FAN_VECTOR, TEMPERATURE_VECTOR
+      and THERMAL_VECTOR items, along with a handle_strange function.

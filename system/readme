@@ -26,3 +26,10 @@ function, or what SYSGEN provides.
 This module can't violate VMS system security in any way that DCL can't, so
 if you can see something with F$GETSYI, you can see it with VMS::System.
 If you can't in DCL or SYSGEN, you can't here, either.
+
+WHAT'S NEW SINCE 1.03?
+
+Added support for four neato-keen, but undocumented items--FAN_VECTOR,
+THERMAL_VECTOR, TEMPERATURE_VECTOR, and POWER_VECTOR. They're only
+available in VMS 7.1-1h1 and up, and only for AlphaServer 4000, 4100, 1200,
+1000A, and 8400. 

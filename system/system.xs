@@ -20,6 +20,9 @@ extern "C" {
 #include <syidef.h>
 #include <prcdef.h>
 #include <prdef.h>
+#if __VMS_VER > 70000000
+#include <hwrpbdef.h>
+#endif
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -74,17 +77,6 @@ typedef struct {char  *ItemName;         /* Name of the item we're getting */
 
 struct SysInfoID {
   char *SysInfoName; /* Pointer to the item name */
-  int  SYIValue;      /* Value to use in the getsyi item list */
-  int  BufferLen;     /* Length the return va buf needs to be. (no nul */
-                      /* terminators, so must be careful with the return */
-                      /* values. */
-  int  ReturnType;    /* Type of data the item returns */
-  int     LocalOnly;  /* True if the item is good only for the local node, */
-                      /* false for cluster-wide items */
-};
-
-struct SysParmID {
-  char *SysParmName; /* Pointer to the item name */
   int  SYIValue;      /* Value to use in the getsyi item list */
   int  BufferLen;     /* Length the return va buf needs to be. (no nul */
                       /* terminators, so must be careful with the return */
@@ -839,6 +831,18 @@ struct SysInfoID SysInfoList[] =
 #ifdef SYI$_XQPCTLD1
   {"XQPCTLD1", SYI$_XQPCTLD1, 4, IS_LONGWORD, TRUE},
 #endif
+#ifdef SYI$_POWER_VECTOR
+  {"POWER_VECTOR", SYI$_POWER_VECTOR, 16, IS_STRANGE, TRUE},
+#endif
+#ifdef SYI$_FAN_VECTOR
+  {"FAN_VECTOR", SYI$_FAN_VECTOR, 16, IS_STRANGE, TRUE},
+#endif
+#ifdef SYI$_TEMPERATURE_VECTOR
+  {"TEMPERATURE_VECTOR", SYI$_TEMPERATURE_VECTOR, 16, IS_STRANGE, TRUE},
+#endif
+#ifdef SYI$_THERMAL_VECTOR
+  {"THERMAL_VECTOR", SYI$_THERMAL_VECTOR, 16, IS_STRANGE, TRUE},
+#endif
   {NULL, 0, 0, 0, 0}
 };
 
@@ -888,13 +892,163 @@ set_local_node_name()
   }
 }
 
+/* This routine decodes a 'strange' entry. Takes a pointer  to the */
+/* FetchedItem buffer, and Does The Right Thing. Returns an SV (or */
+/* something  that looks like an SV) */
+
+SV *
+decode_strange(FetchedItem *ItemToDecode)
+{
+#ifdef SYI$_POWER_VECTOR
+  if (ItemToDecode->ReturnType == SYI$_POWER_VECTOR) {
+    AV *PowerAV;
+    char *Vector;
+    int i;
+    SV *GoodSV, *BadSV, *NotPresentSV, *DunnoSV;
+    GoodSV = sv_2mortal(newSVpv("Good", 0));
+    BadSV = sv_2mortal(newSVpv("Bad", 0));
+    NotPresentSV = sv_2mortal(newSVpv("Not Present", 0));
+    DunnoSV = sv_2mortal(newSVpv("Dunno", 0));
+    
+    /* Allocate ourselves an AV */
+    PowerAV = newAV();
+    /* Preextend it */
+    av_extend(PowerAV, 16);
+    
+    Vector = ItemToDecode->ReturnBuffer;
+    for (i=15; i < 0; i--) {
+      switch(Vector[i]) {
+      case 0:
+        av_store(PowerAV, i, BadSV);
+        break;
+      case 1:
+        av_store(PowerAV, i, GoodSV);
+        break;
+      case 255:
+        av_store(PowerAV, i, NotPresentSV);
+        break;
+      default:
+        av_store(PowerAV, i, DunnoSV);
+        break;
+      }
+    }
+
+    /* Pass back the av */
+    return((SV *)PowerAV);
+  }
+#endif
+      
+#ifdef SYI$_THERMAL_VECTOR
+  if (ItemToDecode->ReturnType == SYI$_THERMAL_VECTOR) {
+    AV *ThermalAV;
+    char *Vector;
+    int i;
+    SV *GoodSV, *BadSV, *NotPresentSV, *DunnoSV;
+    GoodSV = sv_2mortal(newSVpv("Good", 0));
+    BadSV = sv_2mortal(newSVpv("Bad", 0));
+    NotPresentSV = sv_2mortal(newSVpv("Not Present", 0));
+    DunnoSV = sv_2mortal(newSVpv("Dunno", 0));
+    
+    /* Allocate ourselves an AV */
+    ThermalAV = newAV();
+    /* Preextend it */
+    av_extend(ThermalAV, 16);
+    
+    Vector = ItemToDecode->ReturnBuffer;
+    for (i=15; i < 0; i--) {
+      switch(Vector[i]) {
+      case 0:
+        av_store(ThermalAV, i, BadSV);
+        break;
+      case 1:
+        av_store(ThermalAV, i, GoodSV);
+        break;
+      case 255:
+        av_store(ThermalAV, i, NotPresentSV);
+        break;
+      default:
+        av_store(ThermalAV, i, DunnoSV);
+        break;
+      }
+    }
+
+    /* Pass back the av */
+    return((SV *)ThermalAV);
+
+  }
+#endif
+      
+#ifdef SYI$_FAN_VECTOR
+  if (ItemToDecode->ReturnType == SYI$_FAN_VECTOR) {
+    AV *FanAV;
+    char *Vector;
+    int i;
+    SV *GoodSV, *BadSV, *NotPresentSV, *DunnoSV;
+    GoodSV = sv_2mortal(newSVpv("Good", 0));
+    BadSV = sv_2mortal(newSVpv("Bad", 0));
+    NotPresentSV = sv_2mortal(newSVpv("Not Present", 0));
+    DunnoSV = sv_2mortal(newSVpv("Dunno", 0));
+    
+    /* Allocate ourselves an AV */
+    FanAV = newAV();
+    /* Preextend it */
+    av_extend(FanAV, 16);
+    
+    Vector = ItemToDecode->ReturnBuffer;
+    for (i=15; i < 0; i--) {
+      switch(Vector[i]) {
+      case 0:
+        av_store(FanAV, i, BadSV);
+        break;
+      case 1:
+        av_store(FanAV, i, GoodSV);
+        break;
+      case 255:
+        av_store(FanAV, i, NotPresentSV);
+        break;
+      default:
+        av_store(FanAV, i, DunnoSV);
+        break;
+      }
+    }
+
+    /* Pass back the av */
+    return((SV *)FanAV);
+
+  }
+#endif
+      
+#ifdef SYI$_TEMPERATURE_VECTOR
+  if (ItemToDecode->ReturnType == SYI$_TEMPERATURE_VECTOR) {
+    AV *TempAV;
+    char *Vector;
+    int i;
+    
+    /* Allocate ourselves an AV */
+    TempAV = newAV();
+    /* Preextend it */
+    av_extend(TempAV, 16);
+    
+    Vector = ItemToDecode->ReturnBuffer;
+    for (i=15; i < 0; i--) {
+      av_store(TempAV, i, sv_2mortal(newSViv(Vector[i])));
+    }
+
+    /* Pass back the av */
+    return((SV *)TempAV);
+
+  }
+#endif
+  return(&sv_undef);
+}
+     
 /* This routine takes a SYI item list ID and the value that wants to be */
 /* de-enumerated and returns a pointer to an SV with the de-enumerated name */
 /* in it */
 SV *
 enum_name(long syi_entry, long val_to_deenum)
 {
-  SV *WorkingSV = newSV(10);
+  SV *WorkingSV = newSV(20);
   char ErrorMessage[255];
   switch (syi_entry) {
 #ifdef SYI$_ARCH_TYPE
